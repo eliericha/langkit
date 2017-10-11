@@ -1490,6 +1490,7 @@ class CompileCtx(object):
             EnvSpecPass('create internal properties for env specs',
                         EnvSpec.create_properties,
                         iter_metaclass=True),
+
             GlobalPass('create enum node classes',
                        CompileCtx.create_enum_node_classes),
             GrammarRulePass('compute fields types',
@@ -1573,6 +1574,17 @@ class CompileCtx(object):
                        disabled=not annotate_fields_types),
             errors_checkpoint_pass,
         )
+
+        # TODO: plugins are automatically detected as long as the containing
+        # module is imported somewhere in the execution path. Langkit should
+        # have a command line argument (and/or an environment variable)
+        # specifying a directory of Python modules to import automatically so
+        # that any plugins defined there are automatically loaded and invoked
+        # here.
+        import langkit.plugins.ecore
+        from langkit.plugins import PluginMetaclass
+        plugin_passes = [t() for t in PluginMetaclass.get_plugins()]
+        pass_manager.add(*plugin_passes)
 
         with names.camel_with_underscores:
             pass_manager.run(self)
